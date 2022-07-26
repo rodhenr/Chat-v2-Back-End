@@ -20,9 +20,13 @@ const login = async (req, res) => {
     const acessToken = jwt.sign({ userEmail }, process.env.SECRET_KEY, {
       expiresIn: "10m",
     });
-    const refreshToken = jwt.sign({ userEmail }, process.env.SECRET_REFRESH_KEY, {
-      expiresIn: "15m",
-    });
+    const refreshToken = jwt.sign(
+      { userEmail },
+      process.env.SECRET_REFRESH_KEY,
+      {
+        expiresIn: "15m",
+      }
+    );
 
     // salva o refreshToken em um cookie httpOnly
     res.cookie("jwt", refreshToken, {
