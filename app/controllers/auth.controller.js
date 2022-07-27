@@ -9,12 +9,12 @@ const login = async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user)
-      return res.status(401).json({ error: "Usuário e/ou senha inválido(s)" });
+      return res.status(401).json({ error: "E-Mail e/ou senha incorreto(s)" });
 
     // compara o password do banco de dados com o password digitado
     const checkPassword = await bcrypt.compare(password, user.password);
     if (!checkPassword)
-      return res.status(401).json({ error: "Usuário e/ou senha inválido(s)" });
+      return res.status(401).json({ error: "E-Mail e/ou senha incorreto(s)" });
 
     const userEmail = user.email;
     const acessToken = jwt.sign({ userEmail }, process.env.SECRET_KEY, {
