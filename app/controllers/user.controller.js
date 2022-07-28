@@ -17,13 +17,25 @@ const getUserInfo = async (req, res) => {
 
     if (user.connections.length > 0) {
       for (const id of user.connections) {
-        const userMessages = await Message.find({
+        const userMessage = await Message.find({
           $or: [{ sender: id }, { receiver: id }],
-        });
+        })
+          .sort("-createdAt")
+          .limit(1)
+          .populate({
+            path: "sender",
+            match: { _id: id },
+            select: "avatar status firstName lastName -_id",
+          })
+          .populate({
+            path: "receiver",
+            match: { _id: id },
+            select: "avatar status firstName lastName -_id",
+          });
 
-        console.log(userMessages);
+        messages.push(...userMessage);
+
         //populate avatar, fullName, status, criar virtualMethod
-        messages.push(userMessages);
       }
     }
 
@@ -42,3 +54,11 @@ const getUserInfo = async (req, res) => {
 };
 
 module.exports = { getUserInfo };
+
+/*
+    await Message.create({
+      sender: "62e2d873cbc6ce453d2a1050",
+      receiver: user._id,
+      message: "Uma Mensagem de Teste",
+    });
+*/
