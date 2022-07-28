@@ -18,13 +18,13 @@ const login = async (req, res) => {
 
     const userEmail = user.email;
     const acessToken = jwt.sign({ userEmail }, process.env.SECRET_KEY, {
-      expiresIn: "10m",
+      expiresIn: "1000m",
     });
     const refreshToken = jwt.sign(
       { userEmail },
       process.env.SECRET_REFRESH_KEY,
       {
-        expiresIn: "15m",
+        expiresIn: "1500m",
       }
     );
 
@@ -39,7 +39,6 @@ const login = async (req, res) => {
     // envia o acessToken para o client
     res.json({ acessToken });
   } catch (err) {
-    console.log(err);
     res.status(500).json({ error: "Ocorreu um problema no servidor" });
   }
 };
@@ -57,6 +56,7 @@ const register = async (req, res) => {
 
     res.status(200).json({ message: "Usuário cadastrado com sucesso" });
   } catch (err) {
+    console.log(err);
     res.status(500).json({ error: "Ocorreu um problema no servidor" });
   }
 };
