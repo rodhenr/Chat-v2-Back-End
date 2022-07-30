@@ -17,14 +17,14 @@ const login = async (req, res) => {
       return res.status(401).json({ error: "E-Mail e/ou senha incorreto(s)" });
 
     const userEmail = user.email;
-    const acessToken = jwt.sign({ userEmail }, process.env.SECRET_KEY, {
-      expiresIn: "1000m",
+    const accessToken = jwt.sign({ userEmail }, process.env.SECRET_KEY, {
+      expiresIn: "10m",
     });
     const refreshToken = jwt.sign(
       { userEmail },
       process.env.SECRET_REFRESH_KEY,
       {
-        expiresIn: "1500m",
+        expiresIn: "15m",
       }
     );
 
@@ -36,8 +36,8 @@ const login = async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    // envia o acessToken para o client
-    res.json({ acessToken });
+    // envia o accessToken para o client
+    res.json({ accessToken });
   } catch (err) {
     res.status(500).json({ error: "Ocorreu um problema no servidor" });
   }

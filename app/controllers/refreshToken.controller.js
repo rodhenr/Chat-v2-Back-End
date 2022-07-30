@@ -14,21 +14,21 @@ const refreshToken = async (req, res) => {
     if (err) return res.status(406).json({ error: "Refresh Token expirado!" });
 
     const { userEmail } = decoded;
-    const newAccessToken = jwt.sign({ userEmail }, process.env.SECRET_KEY, {
+    const accessToken = jwt.sign({ userEmail }, process.env.SECRET_KEY, {
       expiresIn: "10m",
     });
-    const newRefreshToken = jwt.sign({ userEmail }, process.env.SECRET_KEY, {
+    const refreshToken = jwt.sign({ userEmail }, process.env.SECRET_REFRESH_KEY, {
       expiresIn: "15m",
     });
 
-    res.cookie("jwt", newRefreshToken, {
+    res.cookie("jwt", refreshToken, {
       httpOnly: true,
       sameSite: "None",
       secure: true,
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    return res.json({ newAccessToken });
+    return res.json({ accessToken });
   });
 };
 
