@@ -1,6 +1,7 @@
 const User = require("../models/UserModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+var { customAlphabet } = require("nanoid");
 require("dotenv").config();
 
 const login = async (req, res) => {
@@ -18,13 +19,13 @@ const login = async (req, res) => {
 
     const userEmail = user.email;
     const accessToken = jwt.sign({ userEmail }, process.env.SECRET_KEY, {
-      expiresIn: "10m",
+      expiresIn: "100m",
     });
     const refreshToken = jwt.sign(
       { userEmail },
       process.env.SECRET_REFRESH_KEY,
       {
-        expiresIn: "15m",
+        expiresIn: "150m",
       }
     );
 
@@ -48,10 +49,19 @@ const register = async (req, res) => {
 
   try {
     const user = await User.findOne({ email });
+
     if (user) return res.status(409).json({ error: "Usuário já cadastrado!" });
 
+    const nanoid = customAlphabet("1234567890abcdef", 6);
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    const userData = { firstName, lastName, email, password: hashedPassword };
+    const userData = {
+      firstName,
+      lastName,
+      email,
+      password: hashedPassword,
+      userId: nanoid(),
+    };
     await User.create(userData);
 
     res.status(200).json({ message: "Usuário cadastrado com sucesso" });
