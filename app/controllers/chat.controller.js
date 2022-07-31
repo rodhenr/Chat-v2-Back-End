@@ -32,6 +32,7 @@ const mainChatInfo = async (req, res) => {
         const messageInfo = {
           avatar: contact.avatar,
           contactId: contact.userId,
+          createdAt: "",
           fullName: `${contact.firstName} ${contact.lastName}`,
           message: "",
           sender: null,
@@ -42,6 +43,7 @@ const mainChatInfo = async (req, res) => {
         if (!userMessage) {
           messages.push(messageInfo);
         } else {
+          messageInfo.createdAt = userMessage.createdAt;
           messageInfo.message = userMessage.message;
           messageInfo.sender = userMessage.sender;
           messages.push(messageInfo);
@@ -72,11 +74,9 @@ const userChatInfo = async (req, res) => {
   try {
     const user = await User.findOne({ email: userEmail }).select("userId");
 
-    const contactInfo = await User.findOne({ userId: contactId }).select(
-      "firstName lastName avatar status userId -_id"
-    );
+    const contact = await User.findOne({ userId: contactId });
 
-    if (!user || !contactInfo)
+    if (!user || !contact)
       return res.status(400).json({ error: "Usuário não encontrado!" });
 
     // filtra as mensagens da conversa entre os dois usuários
@@ -85,17 +85,21 @@ const userChatInfo = async (req, res) => {
         { sender: contactId, receiver: user.userId },
         { sender: user.userId, receiver: contactId },
       ],
-    });
+    }).select("-__v");
 
     // se não houverem mensagens, retorna uma array vazio
     if (!messages) messages = [];
 
     // busca informações do usuário alvo
 
-    res.status(200).json({
-      data: [...messages],
-      userId: user.userId,
-      contactInfo: contactInfo,
+    res.status(200).json({contactInfo: {
+          avatar: contact.avatar,
+          contactId: contact.userId,
+          fullName: `${contact.firstName} ${contact.lastName}`,
+          status: contact.status,
+        },
+        messageInfo: [...messages],
+        userInfo: { userId: user.userId },
     });
   } catch (err) {
     res.status(500).json({ error: "Aconteceu um erro no servidor..." });
