@@ -10,53 +10,23 @@ const mainChatInfo = async (req, res) => {
     if (!user)
       return res.status(400).json({ error: "Usuário não encontrado!" });
 
-    // usuário fica online
-    user.status = "online";
-    await user.save();
-
+    const connections = [];
     // busca a primeira mensagem recebida de cada usuário
-    const messages = [];
     if (user.connections.length > 0) {
       for (const id of user.connections) {
-        const userMessage = await Message.findOne({
-          $or: [
-            { sender: id, receiver: user.userId },
-            { sender: user.userId, receiver: id },
-          ],
-        })
-          .sort("-createdAt")
-          .limit(1);
+        const userInfo = await User.findOne({ userId: id }).select(
+          "avatar firstName lastName status userId -_id"
+        );
 
-        const contact = await User.findOne({ userId: id });
-
-        const messageInfo = {
-          avatar: contact.avatar,
-          contactId: contact.userId,
-          createdAt: "",
-          fullName: `${contact.firstName} ${contact.lastName}`,
-          message: "",
-          sender: null,
-          status: contact.status,
-        };
-
-        //se não possuir mensagem, deixar em branco
-        if (!userMessage) {
-          messages.push(messageInfo);
-        } else {
-          messageInfo.createdAt = userMessage.createdAt;
-          messageInfo.message = userMessage.message;
-          messageInfo.sender = userMessage.sender;
-          messages.push(messageInfo);
-        }
+        connections.push(userInfo);
       }
     }
 
     // cria array de dados
     const data = {
       avatar: user.avatar,
-      connections: user.connections,
+      connections: connections,
       fullName: `${user.firstName} ${user.lastName}`,
-      messages: messages,
       status: user.status,
       userId: user.userId,
     };
@@ -92,15 +62,18 @@ const userChatInfo = async (req, res) => {
 
     // busca informações do usuário alvo
 
-    res.status(200).json({contactInfo: {
-          avatar: contact.avatar,
-          contactId: contact.userId,
-          fullName: `${contact.firstName} ${contact.lastName}`,
-          status: contact.status,
-        },
-        messageInfo: [...messages],
-        userInfo: { userId: user.userId },
-    });
+    const data = {
+      contactInfo: {
+        avatar: contact.avatar,
+        contactId: contact.userId,
+        fullName: `${contact.firstName} ${contact.lastName}`,
+        status: contact.status,
+      },
+      messageInfo: [...messages],
+      userInfo: { userId: user.userId },
+    };
+
+    res.status(200).json(data);
   } catch (err) {
     res.status(500).json({ error: "Aconteceu um erro no servidor..." });
   }
@@ -119,6 +92,10 @@ const addContact = async (req, res) => {
 
     if (user.email === contact.email)
       return res.status(400).json({ error: "Usuário inválido" });
+
+    const hasConnection = user.connections.some((i) => i === contactId);
+    if (hasConnection)
+      return res.status(400).json({ error: "Usuário já é uma conexão!" });
 
     user.connections.push(contactId);
     contact.connections.push(user.userId);
