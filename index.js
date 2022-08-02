@@ -38,6 +38,12 @@ io.on("connection", async (socket) => {
   const userId = socket.handshake.auth.id;
 
   try {
+    // desconecta se tentar conectar com a mesma conta simultâneo
+    if (io.sockets.adapter.rooms.get(userId) !== undefined) {
+      socket.to(userId).emit("double_connection");
+      io.in(userId).disconnectSockets(true);
+    }
+
     const user = await User.findOne({ userId });
     socket.join(userId);
 
@@ -48,7 +54,7 @@ io.on("connection", async (socket) => {
     socket.emit("users_online", users);
 
     user.connections.map((i) => {
-      socket.to(i).emit("user_online", i);
+      socket.to(i).emit("user_online", userId);
     });
 
     socket.on("private message", async ({ newMessage }) => {
@@ -61,13 +67,16 @@ io.on("connection", async (socket) => {
       await Message.create(newMessage);
     });
 
-    socket.on("disconnect", async () => {
+    socket.on("disconnect", () => {
       user.connections.map((i) => {
-        socket.to(i).emit("user_offline", i);
+        socket.to(i).emit("user_offline", userId);
       });
       socket.leave(userId);
     });
   } catch (err) {
+    console.log(err);
+    if (userId === undefined || userId === null || !userId)
+      socket.emit("no_id");
     socket.disconnect();
   }
 });
