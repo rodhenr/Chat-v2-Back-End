@@ -8,7 +8,6 @@ const UserSchema = Schema({
   firstName: { type: String, required: true },
   lastName: { type: String, required: true },
   password: { type: String, required: true },
-  status: { type: String, default: "offline" },
   userId: { type: String, required: true },
 });
 

@@ -18,6 +18,7 @@ const login = async (req, res) => {
       return res.status(401).json({ error: "E-Mail e/ou senha incorreto(s)" });
 
     const userEmail = user.email;
+    const userId = user.userId;
     const accessToken = jwt.sign({ userEmail }, process.env.SECRET_KEY, {
       expiresIn: "100m",
     });
@@ -38,7 +39,7 @@ const login = async (req, res) => {
     });
 
     // envia o accessToken para o client
-    res.json({ accessToken });
+    res.json({ accessToken, userId });
   } catch (err) {
     res.status(500).json({ error: "Ocorreu um problema no servidor" });
   }
@@ -46,6 +47,7 @@ const login = async (req, res) => {
 
 const register = async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
+
 
   try {
     const user = await User.findOne({ email });

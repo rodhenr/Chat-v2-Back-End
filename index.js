@@ -36,40 +36,40 @@ db.on("error", console.error.bind(console, "Erro na conexão com o MongoDB"));
 
 io.on("connection", async (socket) => {
   const userId = socket.handshake.auth.id;
-  socket.join(userId); // cria uma room com o ID do usuário
 
-  const user = await User.findOne({ userId });
-  user.status = "online";
-  await user.save();
+  try {
+    const user = await User.findOne({ userId });
+    socket.join(userId);
 
-  const messages = await Message.find({ receiver: userId }); // checar se existe alguma mensagem para ser enviada para o user
-  if (messages) socket.emit("off_message", messages); // cria um evento off_message para enviar as mensagens
-  //Message.deleteMany({receiver: userId}) // apaga as mensagens da database
+    const users = [];
+    user.connections.map((i) => {
+      if (io.sockets.adapter.rooms.get(i) !== undefined) return users.push(i); // avisa que está online/ mudar essa parte
+    });
+    socket.emit("users_online", users);
 
-  socket.on("private message", async ({ message, to }) => {
-    // verifica se o usuário está online através do to(userId)
-    // se sim - envia a mensagem diretamente para ele
-    // se não - salva na db e quando o usuario conectar ele a recebe
-    const contact = await User.findOne({ userId: to });
+    user.connections.map((i) => {
+      socket.to(i).emit("user_online", i);
+    });
 
-    if (contact.status === "offline") {
-      // se estiver offline, só retorna
-      Message.create({ message, sender: userId, receiver: to });
-    } else {
-      // io.to("some room").emit("some event");
-      socket.to(to).emit("private message", {
-        message,
-        sender: userId,
-        receiver: to,
-        createdAt: new Date(),
+    socket.on("private message", async ({ newMessage }) => {
+      if (io.sockets.adapter.rooms.get(newMessage.receiver) !== undefined) {
+        socket.to(newMessage.receiver).emit("private message", {
+          ...newMessage,
+        });
+      }
+
+      await Message.create(newMessage);
+    });
+
+    socket.on("disconnect", async () => {
+      user.connections.map((i) => {
+        socket.to(i).emit("user_offline", i);
       });
-    }
-  });
-
-  socket.on("disconnect", async () => {
-    user.status = "offline";
-    await user.save();
-  });
+      socket.leave(userId);
+    });
+  } catch (err) {
+    socket.disconnect();
+  }
 });
 
 server.listen(port, () => {
@@ -77,3 +77,6 @@ server.listen(port, () => {
 });
 
 module.export = app;
+
+// io.sockets.adapter.rooms.get(newMessage.receiver)
+// io.to("some room").emit("some event");

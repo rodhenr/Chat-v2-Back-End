@@ -14,11 +14,31 @@ const mainChatInfo = async (req, res) => {
     // busca a primeira mensagem recebida de cada usuário
     if (user.connections.length > 0) {
       for (const id of user.connections) {
-        const userInfo = await User.findOne({ userId: id }).select(
-          "avatar firstName lastName status userId -_id"
+        const findInfo = await User.findOne({ userId: id }).select(
+          "avatar firstName lastName userId -_id"
         );
+        const userMessage = await Message.findOne({
+          $or: [
+            { sender: id, receiver: user.userId },
+            { sender: user.userId, receiver: id },
+          ],
+        })
+          .sort("-createdAt")
+          .limit(1)
+          .select("-_id -__v");
 
-        connections.push(userInfo);
+        if (userMessage) {
+          const userInfo = {
+            avatar: findInfo.avatar,
+            fullName: `${findInfo.firstName} ${findInfo.lastName}`,
+            userId: findInfo.userId,
+            message: userMessage,
+          };
+          connections.push(userInfo);
+        } else {
+          const userInfo = [findInfo, { message: [] }];
+          connections.push(userInfo);
+        }
       }
     }
 
@@ -27,7 +47,6 @@ const mainChatInfo = async (req, res) => {
       avatar: user.avatar,
       connections: connections,
       fullName: `${user.firstName} ${user.lastName}`,
-      status: user.status,
       userId: user.userId,
     };
 
@@ -43,34 +62,27 @@ const userChatInfo = async (req, res) => {
 
   try {
     const user = await User.findOne({ email: userEmail }).select("userId");
-
     const contact = await User.findOne({ userId: contactId });
 
     if (!user || !contact)
       return res.status(400).json({ error: "Usuário não encontrado!" });
 
-    // filtra as mensagens da conversa entre os dois usuários
-    let messages = await Message.find({
+    let msgs = await Message.find({
       $or: [
-        { sender: contactId, receiver: user.userId },
-        { sender: user.userId, receiver: contactId },
+        { receiver: user.userId, sender: contactId },
+        { receiver: contactId, sender: user.userId },
       ],
-    }).select("-__v");
+    }).select("-_id -__v");
 
-    // se não houverem mensagens, retorna uma array vazio
-    if (!messages) messages = [];
-
-    // busca informações do usuário alvo
+    if (!msgs) msgs = [];
 
     const data = {
       contactInfo: {
         avatar: contact.avatar,
         contactId: contact.userId,
         fullName: `${contact.firstName} ${contact.lastName}`,
-        status: contact.status,
       },
-      messageInfo: [...messages],
-      userInfo: { userId: user.userId },
+      messages: [...msgs],
     };
 
     res.status(200).json(data);
