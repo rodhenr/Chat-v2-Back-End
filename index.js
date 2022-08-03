@@ -67,6 +67,15 @@ io.on("connection", async (socket) => {
       await Message.create(newMessage);
     });
 
+    socket.on("read_message", async (cId) => {
+      // alterar mensagens pelo id da lista e pelo sender = contactId | receiver = userId
+      console.log(cId, userId);
+      await Message.updateMany(
+        { sender: cId, receiver: userId, read: false },
+        { read: true }
+      );
+    });
+
     socket.on("disconnect", () => {
       user.connections.map((i) => {
         socket.to(i).emit("user_offline", userId);

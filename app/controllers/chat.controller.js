@@ -15,7 +15,7 @@ const mainChatInfo = async (req, res) => {
     if (user.connections.length > 0) {
       for (const id of user.connections) {
         const findInfo = await User.findOne({ userId: id }).select(
-          "avatar firstName lastName userId -_id"
+          "avatar firstName lastName userId"
         );
         const userMessage = await Message.findOne({
           $or: [
@@ -25,18 +25,31 @@ const mainChatInfo = async (req, res) => {
         })
           .sort("-createdAt")
           .limit(1)
-          .select("-_id -__v");
+          .select("-__v");
+
+        const notRead = await Message.find({
+          sender: id,
+          receiver: user.userId,
+          read: false,
+        }).count();
 
         if (userMessage) {
           const userInfo = {
             avatar: findInfo.avatar,
             fullName: `${findInfo.firstName} ${findInfo.lastName}`,
-            userId: findInfo.userId,
             message: userMessage,
+            notRead: notRead,
+            userId: findInfo.userId,
           };
           connections.push(userInfo);
         } else {
-          const userInfo = [findInfo, { message: [] }];
+          const userInfo = {
+            avatar: findInfo.avatar,
+            fullName: `${findInfo.firstName} ${findInfo.lastName}`,
+            message: [],
+            notRead: notRead,
+            userId: findInfo.userId,
+          };
           connections.push(userInfo);
         }
       }
@@ -72,7 +85,7 @@ const userChatInfo = async (req, res) => {
         { receiver: user.userId, sender: contactId },
         { receiver: contactId, sender: user.userId },
       ],
-    }).select("-_id -__v");
+    }).select("-__v");
 
     if (!msgs) msgs = [];
 
