@@ -69,7 +69,6 @@ io.on("connection", async (socket) => {
 
     socket.on("read_message", async (cId) => {
       // alterar mensagens pelo id da lista e pelo sender = contactId | receiver = userId
-      console.log(cId, userId);
       await Message.updateMany(
         { sender: cId, receiver: userId, read: false },
         { read: true }
@@ -83,7 +82,6 @@ io.on("connection", async (socket) => {
       socket.leave(userId);
     });
   } catch (err) {
-    console.log(err);
     if (userId === undefined || userId === null || !userId)
       socket.emit("no_id");
     socket.disconnect();

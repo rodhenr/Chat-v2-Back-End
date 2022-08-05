@@ -46,7 +46,7 @@ const mainChatInfo = async (req, res) => {
           const userInfo = {
             avatar: findInfo.avatar,
             fullName: `${findInfo.firstName} ${findInfo.lastName}`,
-            message: [],
+            message: {},
             notRead: notRead,
             userId: findInfo.userId,
           };
