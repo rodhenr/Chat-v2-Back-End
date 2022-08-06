@@ -1,6 +1,6 @@
 ## Descrição do Projeto :ledger:
 
-Este repositório é a parte backend do projeto [Secret Page](https://github.com/rodhenr/Secret-Page-FrontEnd).
+Este repositório é a parte backend do projeto [Chat v2 Front-End](https://github.com/rodhenr/Chat-v2-Front-End).
 
 ## Tecnologias :man_technologist:
 
