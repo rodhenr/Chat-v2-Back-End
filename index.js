@@ -4,12 +4,15 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 const { Server } = require("socket.io");
+
 const Message = require("./app/models/MessagesModel");
 const User = require("./app/models/UserModel");
 const authRoutes = require("./app/routes/auth.routes.js");
 const chatRoutes = require("./app/routes/chat.routes.js");
-const port = 8080;
-const url = "mongodb://localhost:27017/chatdb";
+
+require('dotenv').config()
+const port = process.env.PORT;
+const url = process.env.DB_URL;
 
 const app = express();
 const server = http.createServer(app);
@@ -49,7 +52,7 @@ io.on("connection", async (socket) => {
 
     const users = [];
     user.connections.map((i) => {
-      if (io.sockets.adapter.rooms.get(i) !== undefined) return users.push(i); // avisa que está online/ mudar essa parte
+      if (io.sockets.adapter.rooms.get(i) !== undefined) return users.push(i); // avisa que está online
     });
     socket.emit("users_online", users);
 
@@ -93,6 +96,3 @@ server.listen(port, () => {
 });
 
 module.export = app;
-
-// io.sockets.adapter.rooms.get(newMessage.receiver)
-// io.to("some room").emit("some event");
