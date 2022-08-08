@@ -20,13 +20,13 @@ const login = async (req, res) => {
     const userEmail = user.email;
     const userId = user.userId;
     const accessToken = jwt.sign({ userEmail }, process.env.SECRET_KEY, {
-      expiresIn: "100m",
+      expiresIn: "10m",
     });
     const refreshToken = jwt.sign(
       { userEmail },
       process.env.SECRET_REFRESH_KEY,
       {
-        expiresIn: "150m",
+        expiresIn: "15m",
       }
     );
 
